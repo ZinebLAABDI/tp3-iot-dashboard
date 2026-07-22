@@ -2,59 +2,88 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 
 st.set_page_config(
     page_title="TP3 IoT — Temperature & Humidite",
-    page_icon="🌡️",
+    page_icon="◈",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
 # ------------------------------------------------------------------
-# Petit style additionnel (cartes plus jolies, titres espacés)
+# Palette & typographie
 # ------------------------------------------------------------------
-st.markdown("""
+INK       = "#14213D"
+PAPER     = "#FAF9F6"
+CARD      = "#FFFFFF"
+LINE      = "#E4E1D8"
+COPPER    = "#C1666B"   # temperature
+STEEL     = "#2E5266"   # humidite
+MUTED     = "#6B7280"
+
+st.markdown(f"""
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-    .main > div { padding-top: 1rem; }
-    [data-testid="stMetric"] {
-        background-color: #1C2128;
-        border: 1px solid #30363d;
-        border-radius: 12px;
-        padding: 15px 20px;
-    }
-    [data-testid="stMetricLabel"] { font-size: 14px; opacity: 0.8; }
-    h1, h2, h3 { font-weight: 700; }
-    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
-    .stTabs [data-baseweb="tab"] {
-        background-color: #1C2128;
+    html, body, [class*="css"] {{ font-family: 'Inter', sans-serif; }}
+    h1, h2, h3, .stTabs [data-baseweb="tab"] p {{
+        font-family: 'Space Grotesk', sans-serif !important;
+        letter-spacing: -0.01em;
+    }}
+    .main > div {{ padding-top: 1.2rem; }}
+
+    /* En-tete */
+    .hero-title {{
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: {INK};
+        margin-bottom: 0.1rem;
+    }}
+    .hero-line {{
+        width: 56px; height: 3px; background: {COPPER};
+        border: none; margin: 10px 0 14px 0;
+    }}
+    .hero-sub {{ color: {MUTED}; font-size: 0.98rem; }}
+
+    /* Cartes metriques */
+    [data-testid="stMetric"] {{
+        background-color: {CARD};
+        border: 1px solid {LINE};
+        border-radius: 14px;
+        padding: 16px 20px;
+        box-shadow: 0 1px 2px rgba(20,33,61,0.04);
+    }}
+    [data-testid="stMetricLabel"] {{
+        font-size: 13px; color: {MUTED}; font-weight: 500;
+        text-transform: uppercase; letter-spacing: 0.04em;
+    }}
+    [data-testid="stMetricValue"] {{ color: {INK}; }}
+
+    /* Onglets */
+    .stTabs [data-baseweb="tab-list"] {{ gap: 6px; border-bottom: 1px solid {LINE}; }}
+    .stTabs [data-baseweb="tab"] {{
+        background-color: transparent;
         border-radius: 8px 8px 0 0;
-        padding: 8px 16px;
-    }
+        padding: 8px 18px;
+        color: {MUTED};
+    }}
+    .stTabs [aria-selected="true"] {{ color: {INK} !important; font-weight: 600; }}
+
+    section[data-testid="stSidebar"] {{ background-color: {CARD}; border-right: 1px solid {LINE}; }}
 </style>
 """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------------
-# Barre laterale
-# ------------------------------------------------------------------
-with st.sidebar:
-    st.image("https://em-content.zobj.net/source/apple/391/thermometer_1f321-fe0f.png", width=60)
-    st.title("TP3 — IoT")
-    st.markdown("**Projet :** mesure temperature & humidite avec 1 seul capteur")
-    st.markdown("---")
-    st.markdown("**Etudiants :** _(vos noms ici)_")
-    st.markdown("**Encadrant :** Prof CHERIF Walid")
-    st.markdown("---")
-    st.caption("Master IGOV-TAM · Universite Mohammed V · FSR")
-
-# ------------------------------------------------------------------
 # En-tete
 # ------------------------------------------------------------------
-st.title("🌡️ Dashboard IoT — Temperature & Humidite")
-st.caption("Pipeline complet : capteur simule → base de donnees → nettoyage → visualisation")
-st.markdown("---")
+st.markdown('<div class="hero-title">Temperature &amp; Humidite — Suivi capteur</div>', unsafe_allow_html=True)
+st.markdown('<hr class="hero-line">', unsafe_allow_html=True)
+st.markdown('<div class="hero-sub">TP3 — Internet of Things · Pipeline capteur -> base de donnees -> nettoyage -> analyse</div>', unsafe_allow_html=True)
+st.write("")
 
 # ------------------------------------------------------------------
-# Chargement + nettoyage des donnees
+# Chargement + nettoyage
 # ------------------------------------------------------------------
 @st.cache_data
 def charger_donnees():
@@ -81,102 +110,106 @@ df["mesureT"], maskT = detecter_et_corriger(df["temperature_C"])
 df["mesureH"], maskH = detecter_et_corriger(df["humidite_pct"])
 
 # ------------------------------------------------------------------
-# Filtre (sidebar)
+# Barre laterale
 # ------------------------------------------------------------------
 with st.sidebar:
-    st.markdown("### 🔎 Filtrer les donnees")
+    st.markdown("#### Projet")
+    st.caption("Master IGOV-TAM · Universite Mohammed V · FSR")
+    st.markdown("**Encadrant** — Prof CHERIF Walid")
+    st.markdown("**Equipe** — _(vos noms ici)_")
+    st.markdown("---")
+    st.markdown("#### Periode")
     date_min, date_max = df["date_heure"].min(), df["date_heure"].max()
     plage = st.slider(
-        "Periode",
-        min_value=date_min.to_pydatetime(),
-        max_value=date_max.to_pydatetime(),
-        value=(date_min.to_pydatetime(), date_max.to_pydatetime()),
-        format="DD/MM HH:mm",
+        " ", min_value=date_min.to_pydatetime(), max_value=date_max.to_pydatetime(),
+        value=(date_min.to_pydatetime(), date_max.to_pydatetime()), format="DD/MM HH:mm",
+        label_visibility="collapsed",
     )
+    st.markdown("---")
+    st.caption("Seuil de correction des anomalies : **4**")
 
 df_filtre = df[(df["date_heure"] >= plage[0]) & (df["date_heure"] <= plage[1])]
 df_affichage = df_filtre.iloc[::15, :]
 
 # ------------------------------------------------------------------
-# Indicateurs cles (KPIs)
+# Indicateurs cles
 # ------------------------------------------------------------------
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("📊 Mesures", f"{len(df_filtre):,}".replace(",", " "))
-col2.metric("🌡️ Temp. moyenne", f"{df_filtre['mesureT'].mean():.1f} °C")
-col3.metric("💧 Humidite moyenne", f"{df_filtre['mesureH'].mean():.1f} %")
-col4.metric("🧹 Valeurs corrigees", int(maskT.sum() + maskH.sum()))
+col1.metric("Mesures", f"{len(df_filtre):,}".replace(",", " "))
+col2.metric("Temperature moy.", f"{df_filtre['mesureT'].mean():.1f} °C")
+col3.metric("Humidite moy.", f"{df_filtre['mesureH'].mean():.1f} %")
+col4.metric("Valeurs corrigees", int(maskT.sum() + maskH.sum()))
 
-st.markdown("")
+st.write("")
 
 # ------------------------------------------------------------------
-# Graphiques dans des onglets (plus propre qu'empiler tout)
+# Style Matplotlib assorti au theme clair
 # ------------------------------------------------------------------
-tab1, tab2, tab3, tab4 = st.tabs(["📈 Courbes", "🔵 Correlation", "🧾 Donnees brutes", "🧪 Test de correction"])
-
 plt.rcParams.update({
-    "figure.facecolor": "#0E1117",
-    "axes.facecolor": "#0E1117",
-    "axes.edgecolor": "#888888",
-    "axes.labelcolor": "#FAFAFA",
-    "xtick.color": "#FAFAFA",
-    "ytick.color": "#FAFAFA",
-    "text.color": "#FAFAFA",
-    "grid.color": "#30363d",
+    "figure.facecolor": PAPER, "axes.facecolor": PAPER,
+    "axes.edgecolor": LINE, "axes.labelcolor": INK,
+    "xtick.color": MUTED, "ytick.color": MUTED, "text.color": INK,
+    "grid.color": LINE, "font.family": "sans-serif",
+    "axes.spines.top": False, "axes.spines.right": False,
 })
+
+tab1, tab2, tab3, tab4 = st.tabs(["Courbes", "Correlation", "Donnees", "Verification"])
 
 with tab1:
     c1, c2 = st.columns(2)
     with c1:
-        st.subheader("Temperature dans le temps")
-        fig, ax = plt.subplots()
-        ax.plot(df_affichage["date_heure"], df_affichage["mesureT"], color="#FF6B35", linewidth=1.5)
-        ax.fill_between(df_affichage["date_heure"], df_affichage["mesureT"], alpha=0.1, color="#FF6B35")
-        ax.set_xlabel("Temps"); ax.set_ylabel("Temperature (°C)")
-        ax.grid(alpha=0.3)
-        plt.xticks(rotation=30)
+        st.markdown("**Temperature dans le temps**")
+        fig, ax = plt.subplots(figsize=(6, 3.2))
+        ax.plot(df_affichage["date_heure"], df_affichage["mesureT"], color=COPPER, linewidth=1.6)
+        ax.fill_between(df_affichage["date_heure"], df_affichage["mesureT"], alpha=0.08, color=COPPER)
+        ax.set_ylabel("°C"); ax.grid(alpha=0.5, linewidth=0.6)
+        plt.xticks(rotation=25); plt.tight_layout()
         st.pyplot(fig)
     with c2:
-        st.subheader("Humidite dans le temps")
-        fig, ax = plt.subplots()
-        ax.plot(df_affichage["date_heure"], df_affichage["mesureH"], color="#2E86AB", linewidth=1.5)
-        ax.fill_between(df_affichage["date_heure"], df_affichage["mesureH"], alpha=0.1, color="#2E86AB")
-        ax.set_xlabel("Temps"); ax.set_ylabel("Humidite (%)")
-        ax.grid(alpha=0.3)
-        plt.xticks(rotation=30)
+        st.markdown("**Humidite dans le temps**")
+        fig, ax = plt.subplots(figsize=(6, 3.2))
+        ax.plot(df_affichage["date_heure"], df_affichage["mesureH"], color=STEEL, linewidth=1.6)
+        ax.fill_between(df_affichage["date_heure"], df_affichage["mesureH"], alpha=0.08, color=STEEL)
+        ax.set_ylabel("%"); ax.grid(alpha=0.5, linewidth=0.6)
+        plt.xticks(rotation=25); plt.tight_layout()
         st.pyplot(fig)
 
 with tab2:
-    st.subheader("Nuage de points : Humidite en fonction de la Temperature")
+    st.markdown("**Humidite en fonction de la Temperature**")
     x, y = df_filtre["mesureT"].values, df_filtre["mesureH"].values
     coeffs = np.polyfit(x, y, 1)
     x_ligne = np.linspace(x.min(), x.max(), 100)
-    fig, ax = plt.subplots(figsize=(8, 5))
-    ax.scatter(x, y, s=6, alpha=0.35, color="#4ECDC4")
-    ax.plot(x_ligne, coeffs[0]*x_ligne + coeffs[1], color="#FF6B35", linewidth=2.5)
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    ax.scatter(x, y, s=7, alpha=0.3, color=STEEL, edgecolors="none")
+    ax.plot(x_ligne, coeffs[0]*x_ligne + coeffs[1], color=COPPER, linewidth=2.2)
     ax.set_xlabel("Temperature (°C)"); ax.set_ylabel("Humidite (%)")
-    ax.grid(alpha=0.3)
+    ax.grid(alpha=0.5, linewidth=0.6)
+    plt.tight_layout()
     st.pyplot(fig)
     correlation = np.corrcoef(x, y)[0, 1]
-    st.info(f"**Coefficient de correlation :** {correlation:.3f}  →  "
-            f"{'forte relation negative' if correlation < -0.7 else 'relation moderee'} "
-            f"entre temperature et humidite.")
+    st.markdown(
+        f"<div style='background:{CARD};border:1px solid {LINE};border-radius:12px;padding:14px 18px;color:{INK};'>"
+        f"Coefficient de correlation : <b>{correlation:.3f}</b> — relation "
+        f"{'negative forte' if correlation < -0.7 else 'moderee'} entre temperature et humidite.</div>",
+        unsafe_allow_html=True,
+    )
 
 with tab3:
-    st.subheader("Donnees (apres nettoyage)")
-    st.dataframe(df_filtre[["date_heure", "mesureT", "mesureH"]], use_container_width=True, height=400)
+    st.markdown("**Donnees apres nettoyage**")
+    st.dataframe(df_filtre[["date_heure", "mesureT", "mesureH"]], use_container_width=True, height=420)
 
 with tab4:
-    st.subheader("Preuve : la regle de correction fonctionne")
-    st.write("Exemple donne par le prof : T = 32, 32, 33, 34, **20** (seuil = 4)")
+    st.markdown("**Preuve : la regle de correction fonctionne**")
+    st.caption("Exemple du cours : T = 32, 32, 33, 34, 20 (seuil = 4)")
     exemple = pd.Series([32, 32, 33, 34, 20], dtype=float)
     valeurs_corrigees, masque_demo = detecter_et_corriger(exemple)
     demo_df = pd.DataFrame({
         "Valeur brute": exemple,
-        "Anomalie ?": ["✅ Oui" if m else "" for m in masque_demo],
+        "Anomalie": ["Oui" if m else "—" for m in masque_demo],
         "Valeur corrigee": valeurs_corrigees,
     })
     st.dataframe(demo_df, use_container_width=True)
-    st.success("Le '20' aberrant est detecte et remplace automatiquement.")
 
-st.markdown("---")
+st.write("")
+st.markdown(f"<hr style='border-color:{LINE}'>", unsafe_allow_html=True)
 st.caption("TP3 — Internet of Things · Prof CHERIF Walid · Master IGOV-TAM · FSR")
