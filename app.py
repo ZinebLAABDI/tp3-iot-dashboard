@@ -13,50 +13,71 @@ st.set_page_config(
 # ------------------------------------------------------------------
 # Palette
 # ------------------------------------------------------------------
-INK    = "#14213D"
-PAPER  = "#FAF9F6"
-CARD   = "#FFFFFF"
-LINE   = "#E4E1D8"
-COPPER = "#C1666B"   # temperature
-STEEL  = "#2E5266"   # humidite
-MUTED  = "#6B7280"
+INK      = "#14213D"
+DEEP     = "#0B1424"   # bleu nuit, fond du bandeau hero
+PAPER    = "#FAF9F6"
+CARD     = "#FFFFFF"
+LINE     = "#E4E1D8"
+COPPER   = "#E08D6D"   # temperature (plus clair, lisible sur fond fonce)
+STEEL    = "#7FB3C7"   # humidite (plus clair, lisible sur fond fonce)
+COPPER_D = "#C1666B"   # temperature (version sombre, sur fond clair)
+STEEL_D  = "#2E5266"   # humidite (version sombre, sur fond clair)
+MUTED    = "#6B7280"
 
 st.markdown(f"""
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
     html, body, [class*="css"], p, span, div {{ font-family: 'Inter', sans-serif; }}
     .stApp {{ background-color: {PAPER}; }}
     section[data-testid="stSidebar"] > div {{ background-color: {CARD}; }}
-    .block-container {{ padding-top: 2rem; max-width: 1200px; }}
+    .block-container {{ padding-top: 0rem; max-width: 1200px; }}
+    footer, #MainMenu {{ visibility: hidden; }}
 
+    /* ---------- Bandeau hero ---------- */
+    .hero-band {{
+        background: linear-gradient(120deg, {DEEP} 0%, {INK} 55%, {STEEL_D} 130%);
+        margin: 0 -5rem 28px -5rem;
+        padding: 46px 5rem 34px 5rem;
+        border-radius: 0 0 28px 28px;
+    }}
+    .hero-eyebrow {{
+        color: {STEEL}; font-size: 0.78rem; font-weight: 600;
+        text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 10px;
+    }}
     .hero-title {{
         font-family: 'Space Grotesk', sans-serif;
-        font-size: 2.3rem; font-weight: 700; color: {INK};
-        margin: 0 0 6px 0; letter-spacing: -0.02em;
+        font-size: 2.5rem; font-weight: 800; color: #FFFFFF;
+        margin: 0 0 8px 0; letter-spacing: -0.02em; line-height: 1.1;
     }}
-    .hero-line {{ width: 52px; height: 3px; background: {COPPER}; margin: 4px 0 16px 0; border-radius: 2px; }}
-    .hero-sub {{ color: {MUTED}; font-size: 0.98rem; margin-bottom: 28px; }}
+    .hero-sub {{ color: #C7CEDB; font-size: 1rem; margin-bottom: 26px; max-width: 640px; }}
 
+    /* ---------- Cartes KPI verre depoli ---------- */
     .kpi-card {{
-        background: {CARD}; border: 1px solid {LINE}; border-radius: 14px;
-        padding: 18px 20px; box-shadow: 0 2px 8px rgba(20,33,61,0.06);
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.14);
+        backdrop-filter: blur(6px);
+        border-radius: 16px;
+        padding: 18px 20px;
         height: 100%;
     }}
     .kpi-label {{
-        font-size: 11px; font-weight: 600; color: {MUTED};
-        text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
-        display: flex; align-items: center; gap: 6px;
+        font-size: 11px; font-weight: 600; color: #A9B4C7;
+        text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px;
+        display: flex; align-items: center; gap: 7px;
     }}
     .kpi-dot {{ width: 8px; height: 8px; border-radius: 50%; display: inline-block; }}
     .kpi-value {{
-        font-family: 'Space Grotesk', sans-serif; font-size: 1.9rem;
-        font-weight: 700; color: {INK}; letter-spacing: -0.01em;
+        font-family: 'Space Grotesk', sans-serif; font-size: 2rem;
+        font-weight: 700; color: #FFFFFF; letter-spacing: -0.01em;
     }}
 
+    /* ---------- Corps clair ---------- */
     .section-title {{
         font-family: 'Space Grotesk', sans-serif; font-weight: 600;
         font-size: 1.05rem; color: {INK}; margin-bottom: 4px;
+        display: flex; align-items: center; gap: 8px;
     }}
+    .section-accent {{ width: 4px; height: 18px; border-radius: 2px; display: inline-block; }}
     .section-caption {{ color: {MUTED}; font-size: 0.85rem; margin-bottom: 14px; }}
 
     .stTabs [data-baseweb="tab-list"] {{ gap: 4px; border-bottom: 1px solid {LINE}; }}
@@ -65,17 +86,8 @@ st.markdown(f"""
         padding: 8px 18px; color: {MUTED}; font-weight: 500;
     }}
     .stTabs [aria-selected="true"] {{ color: {INK} !important; font-weight: 700 !important; }}
-
-    footer, #MainMenu {{ visibility: hidden; }}
 </style>
 """, unsafe_allow_html=True)
-
-# ------------------------------------------------------------------
-# En-tete
-# ------------------------------------------------------------------
-st.markdown('<div class="hero-title">Temperature &amp; Humidite — Suivi capteur</div>', unsafe_allow_html=True)
-st.markdown('<div class="hero-line"></div>', unsafe_allow_html=True)
-st.markdown('<div class="hero-sub">TP3 — Internet of Things · Pipeline capteur → base de donnees → nettoyage → analyse</div>', unsafe_allow_html=True)
 
 # ------------------------------------------------------------------
 # Chargement + nettoyage
@@ -126,32 +138,42 @@ with st.sidebar:
 df_filtre = df[(df["date_heure"] >= plage[0]) & (df["date_heure"] <= plage[1])]
 df_affichage = df_filtre.iloc[::15, :]
 
+nb_mesures = f"{len(df_filtre):,}".replace(",", " ")
+temp_moy = f"{df_filtre['mesureT'].mean():.1f} °C"
+hum_moy = f"{df_filtre['mesureH'].mean():.1f} %"
+nb_corrigees = int(maskT.sum() + maskH.sum())
+
 # ------------------------------------------------------------------
-# Cartes KPI (HTML pur, fiable quelle que soit la version Streamlit)
+# Bandeau HERO (titre + KPIs en verre depoli)
 # ------------------------------------------------------------------
-def kpi_card(label, value, color):
-    return f"""
-    <div class="kpi-card">
-        <div class="kpi-label"><span class="kpi-dot" style="background:{color}"></span>{label}</div>
-        <div class="kpi-value">{value}</div>
+st.markdown(f"""
+<div class="hero-band">
+    <div class="hero-eyebrow">TP3 · INTERNET OF THINGS</div>
+    <div class="hero-title">Temperature &amp; Humidite<br>Suivi capteur en temps reel</div>
+    <div class="hero-sub">Pipeline complet : capteur simule -> base de donnees -> nettoyage automatique des anomalies -> analyse et visualisation.</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+        <div class="kpi-card">
+            <div class="kpi-label"><span class="kpi-dot" style="background:#FFFFFF"></span>Mesures</div>
+            <div class="kpi-value">{nb_mesures}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label"><span class="kpi-dot" style="background:{COPPER}"></span>Temperature moy.</div>
+            <div class="kpi-value">{temp_moy}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label"><span class="kpi-dot" style="background:{STEEL}"></span>Humidite moy.</div>
+            <div class="kpi-value">{hum_moy}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label"><span class="kpi-dot" style="background:#8FD694"></span>Valeurs corrigees</div>
+            <div class="kpi-value">{nb_corrigees}</div>
+        </div>
     </div>
-    """
-
-k1, k2, k3, k4 = st.columns(4)
-with k1:
-    st.markdown(kpi_card("Mesures", f"{len(df_filtre):,}".replace(",", " "), INK), unsafe_allow_html=True)
-with k2:
-    st.markdown(kpi_card("Temperature moy.", f"{df_filtre['mesureT'].mean():.1f} °C", COPPER), unsafe_allow_html=True)
-with k3:
-    st.markdown(kpi_card("Humidite moy.", f"{df_filtre['mesureH'].mean():.1f} %", STEEL), unsafe_allow_html=True)
-with k4:
-    st.markdown(kpi_card("Valeurs corrigees", int(maskT.sum() + maskH.sum()), MUTED), unsafe_allow_html=True)
-
-st.write("")
-st.write("")
+</div>
+""", unsafe_allow_html=True)
 
 # ------------------------------------------------------------------
-# Style Matplotlib force par figure (pas seulement rcParams globaux)
+# Style Matplotlib force par figure
 # ------------------------------------------------------------------
 def style_figure(fig, ax):
     fig.patch.set_facecolor(CARD)
@@ -165,26 +187,32 @@ def style_figure(fig, ax):
     ax.yaxis.label.set_color(MUTED)
     ax.grid(alpha=0.4, linewidth=0.6, color=LINE)
 
+def section_title(text, color):
+    st.markdown(
+        f'<div class="section-title"><span class="section-accent" style="background:{color}"></span>{text}</div>',
+        unsafe_allow_html=True,
+    )
+
 tab1, tab2, tab3, tab4 = st.tabs(["Courbes", "Correlation", "Donnees", "Verification"])
 
 with tab1:
     c1, c2 = st.columns(2)
     with c1:
         with st.container(border=True):
-            st.markdown('<div class="section-title">Temperature dans le temps</div>', unsafe_allow_html=True)
+            section_title("Temperature dans le temps", COPPER_D)
             fig, ax = plt.subplots(figsize=(6, 3.2))
-            ax.plot(df_affichage["date_heure"], df_affichage["mesureT"], color=COPPER, linewidth=1.8)
-            ax.fill_between(df_affichage["date_heure"], df_affichage["mesureT"], alpha=0.10, color=COPPER)
+            ax.plot(df_affichage["date_heure"], df_affichage["mesureT"], color=COPPER_D, linewidth=1.8)
+            ax.fill_between(df_affichage["date_heure"], df_affichage["mesureT"], alpha=0.10, color=COPPER_D)
             ax.set_ylabel("°C")
             style_figure(fig, ax)
             plt.xticks(rotation=25); plt.tight_layout()
             st.pyplot(fig, use_container_width=True)
     with c2:
         with st.container(border=True):
-            st.markdown('<div class="section-title">Humidite dans le temps</div>', unsafe_allow_html=True)
+            section_title("Humidite dans le temps", STEEL_D)
             fig, ax = plt.subplots(figsize=(6, 3.2))
-            ax.plot(df_affichage["date_heure"], df_affichage["mesureH"], color=STEEL, linewidth=1.8)
-            ax.fill_between(df_affichage["date_heure"], df_affichage["mesureH"], alpha=0.10, color=STEEL)
+            ax.plot(df_affichage["date_heure"], df_affichage["mesureH"], color=STEEL_D, linewidth=1.8)
+            ax.fill_between(df_affichage["date_heure"], df_affichage["mesureH"], alpha=0.10, color=STEEL_D)
             ax.set_ylabel("%")
             style_figure(fig, ax)
             plt.xticks(rotation=25); plt.tight_layout()
@@ -192,13 +220,13 @@ with tab1:
 
 with tab2:
     with st.container(border=True):
-        st.markdown('<div class="section-title">Humidite en fonction de la Temperature</div>', unsafe_allow_html=True)
+        section_title("Humidite en fonction de la Temperature", STEEL_D)
         x, y = df_filtre["mesureT"].values, df_filtre["mesureH"].values
         coeffs = np.polyfit(x, y, 1)
         x_ligne = np.linspace(x.min(), x.max(), 100)
         fig, ax = plt.subplots(figsize=(8, 4.6))
-        ax.scatter(x, y, s=8, alpha=0.30, color=STEEL, edgecolors="none")
-        ax.plot(x_ligne, coeffs[0]*x_ligne + coeffs[1], color=COPPER, linewidth=2.4)
+        ax.scatter(x, y, s=8, alpha=0.30, color=STEEL_D, edgecolors="none")
+        ax.plot(x_ligne, coeffs[0]*x_ligne + coeffs[1], color=COPPER_D, linewidth=2.4)
         ax.set_xlabel("Temperature (°C)"); ax.set_ylabel("Humidite (%)")
         style_figure(fig, ax)
         plt.tight_layout()
@@ -212,12 +240,12 @@ with tab2:
 
 with tab3:
     with st.container(border=True):
-        st.markdown('<div class="section-title">Donnees apres nettoyage</div>', unsafe_allow_html=True)
+        section_title("Donnees apres nettoyage", INK)
         st.dataframe(df_filtre[["date_heure", "mesureT", "mesureH"]], use_container_width=True, height=420)
 
 with tab4:
     with st.container(border=True):
-        st.markdown('<div class="section-title">Preuve : la regle de correction fonctionne</div>', unsafe_allow_html=True)
+        section_title("Preuve : la regle de correction fonctionne", "#8FD694")
         st.markdown('<div class="section-caption">Exemple du cours : T = 32, 32, 33, 34, 20 (seuil = 4)</div>', unsafe_allow_html=True)
         exemple = pd.Series([32, 32, 33, 34, 20], dtype=float)
         valeurs_corrigees, masque_demo = detecter_et_corriger(exemple)
