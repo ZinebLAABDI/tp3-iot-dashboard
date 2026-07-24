@@ -106,7 +106,7 @@ with st.sidebar:
     st.markdown("#### Projet")
     st.caption("Master IGOV-TAM · Universite Mohammed V · FSR")
     st.markdown("**Encadrant** — Prof CHERIF Walid")
-    st.markdown("**Equipe** — _(Zineb LAABDI et Ikram El Alt)_")
+    st.markdown("**Equipe** — _(Zineb LAABDI , Ikram El Alt)_")
     st.markdown("---")
     st.markdown("#### Periode")
     date_min, date_max = df["date_heure"].min(), df["date_heure"].max()
