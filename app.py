@@ -19,7 +19,7 @@ BORDER  = "#E8E2D3"   # bordures fines, chaudes
 INK     = "#1F2937"   # texte principal (slate fonce)
 MUTED   = "#8B8578"   # texte secondaire (chaud, pas gris froid)
 BLUE    = "#C6E0FF"   # accent principal
-BLUE_L  = "#EFF3FE"   # fond badge/pill bleu clair
+BLUE_L  = "#346096"   # fond badge/pill bleu clair
 AMBER   = "#C2793D"   # 2e serie (temperature), complementaire chaud
 
 st.markdown(f"""
