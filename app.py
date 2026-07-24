@@ -18,7 +18,7 @@ CARD    = "#FFFFFF"   # cartes
 BORDER  = "#E8E2D3"   # bordures fines, chaudes
 INK     = "#1F2937"   # texte principal (slate fonce)
 MUTED   = "#8B8578"   # texte secondaire (chaud, pas gris froid)
-BLUE    = "#2563EB"   # accent principal
+BLUE    = "#C6E0FF"   # accent principal
 BLUE_L  = "#EFF3FE"   # fond badge/pill bleu clair
 AMBER   = "#C2793D"   # 2e serie (temperature), complementaire chaud
 
